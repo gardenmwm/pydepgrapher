@@ -1,4 +1,4 @@
-resource,resource_type,dependancy,dependancy_type
+resource,resource_type,dependency,dependency_type
 athena,Mac,NetGear2200,nfs
 NetGear2200,NAS,,
 aphrodite,RHEL_Server,NetGear2200,nfs

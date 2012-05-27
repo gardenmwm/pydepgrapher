@@ -77,15 +77,15 @@ def getnodes(deps):
             nodelist.append([dep['resource'],dep['resource_type']])
         elif dep['resource_type'] != '':
             nodelist[NodeExistsInList(nodelist,dep['resource'])][1]=dep['resource_type']
-        if not NodeExistsInList(nodelist,dep['dependancy']) and dep['dependancy'] != '':
-            nodelist.append([dep['dependancy'],''])
+        if not NodeExistsInList(nodelist,dep['dependency']) and dep['dependency'] != '':
+            nodelist.append([dep['dependency'],''])
     return nodelist
 
 def getedges(deps):
     edgelist=[]
     for dep in deps:
-        if dep['dependancy'] != '':
-            edge=[dep['resource'],dep['dependancy'],dep['dependancy_type']]
+        if dep['dependency'] != '':
+            edge=[dep['resource'],dep['dependency'],dep['dependency_type']]
             edgelist.append(edge)
     return edgelist
 
