@@ -1,6 +1,12 @@
-resource,resource_type,dependancy,dependancy_type,Dependancy_Notes,Resource_Notes
+resource,resource_type,dependancy,dependancy_type
 athena,Mac,NetGear2200,nfs
-NetGear2200,NFS Server,
-aphrodite,RHEL Server,NetGear2200,nfs
+NetGear2200,NAS,,
+aphrodite,RHEL_Server,NetGear2200,nfs
 athena,,airport,dns
 aphrodite,,airport,dns
+hera,Windows7,airport,dns
+hera,,aphrodite,SMB
+hera,,NetGear2200,nfs
+phoebe,RHEL_Server,aphrodite,SMB
+phoebe,,airport,dns
+phoebe,,NetGear2200,nfs
