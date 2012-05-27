@@ -6,7 +6,6 @@ This program creates graphs of from a list of dependencies provided in a csv
 file. 
 It uses graphviz and pydot heavily. 
 
-Copyright (c) 2012-2018 Matt Marshall <gardenmwm@gmail.com>
 Distributed under MIT licesne
 
 pyDepGrapher Homepage: 	http://code.google.com/p/pydepgrapher/
