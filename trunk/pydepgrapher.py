@@ -16,6 +16,8 @@ Graphviz		http://www.graphviz.org
 import pydot
 import csv
 import ConfigParser
+import argparse
+import sys
 
 def GetNodeOptions(parser):
     Opts={}
@@ -62,23 +64,12 @@ def readsource(sourcefile):
         deplist.append(row)
     return deplist
 
-def NodeExistsInList(nodelist,nodestring):
-    found = False
-    i=0
-    for node in nodelist:
-        if nodestring == node[0]: found = i
-        i+=1
-    return found
-
 def getnodes(deps):
-    nodelist=[]
+    nodelist={}
     for dep in deps:
-        if not NodeExistsInList(nodelist,dep['resource']):
-            nodelist.append([dep['resource'],dep['resource_type']])
-        elif dep['resource_type'] != '':
-            nodelist[NodeExistsInList(nodelist,dep['resource'])][1]=dep['resource_type']
-        if not NodeExistsInList(nodelist,dep['dependency']) and dep['dependency'] != '':
-            nodelist.append([dep['dependency'],''])
+            nodelist[dep['resource']]=dep['resource_type']
+            if  dep['dependency'] not in nodelist and dep['dependency'] != '':
+	       nodelist[dep['dependency']]=''
     return nodelist
 
 def getedges(deps):
@@ -103,56 +94,56 @@ def makenode(nodestring,nodetype):
             pn.set(k, v)
     return pn
 
-#Parse Config
-print "Parsing Config"
-parser = ConfigParser.SafeConfigParser()
-parser.read('config.ini')
-sourcefile=parser.get('general', 'sourcefile')
-outfile=parser.get('general','outfile')
-NodeOptions=GetNodeOptions(parser)
-EdgeOptions=GetEdgeOptions(parser)
-GraphOptions=GetGraphOptions(parser)
+if __name__=="__main__":
+   #Parse Config
+   print "Parsing Config"
+   parser = ConfigParser.SafeConfigParser()
+   parser.read('config.ini')
+   sourcefile=parser.get('general', 'sourcefile')
+   outfile=parser.get('general','outfile')
+   NodeOptions=GetNodeOptions(parser)
+   EdgeOptions=GetEdgeOptions(parser)
+   GraphOptions=GetGraphOptions(parser)
+   #Get Deps from file and into memory
+   print "Reading Dep file"
+   deps=readsource(sourcefile)
+   print "Reading Nodes"
+   nodestrings=getnodes(deps)
+   print "Reading Edges"
+   edges=getedges(deps)
+   
+   #Build Nodes
+   print "Building Nodes"
+   nodelist=[]
+   for node in nodestrings:
+       nodelist.append(makenode(node,nodestrings[node]))
+   
+   #create graph and add nodes
+   graph=pydot.Dot(**GraphOptions)
+   #graph=pydot.Dot(graph_type='digraph',ratio=1.3,layout='dot',sep='+1',overlap='scalexy')
+   print "Adding Nodes"
+   for node in nodelist:
+       graph.add_node(node)
+   
+   #Create Edges
+   print "Building Edges"
+   edgelist=[]
+   for edge in edges:
+       n1=graph.get_node(edge[0])[0]
+       n2=graph.get_node(edge[1])[0]
+       edgelist.append(makeedge(n1,n2,edge[2]))
 
-#Get Deps from file and into memory
-print "Reading Dep file"
-deps=readsource(sourcefile)
-print "Reading Nodes"
-nodestrings=getnodes(deps)
-print "Reading Edges"
-edges=getedges(deps)
+   #Add Edges
+   print "Adding Edges"
+   for edge in edgelist:
+      graph.add_edge(edge)
 
-#Build Nodes
-print "Building Nodes"
-nodelist=[]
-for node in nodestrings:
-    nodelist.append(makenode(node[0],node[1]))
-
-#create graph and add nodes
-graph=pydot.Dot(**GraphOptions)
-#graph=pydot.Dot(graph_type='digraph',ratio=1.3,layout='dot',sep='+1',overlap='scalexy')
-print "Adding Nodes"
-for node in nodelist:
-    graph.add_node(node)
-
-#Create Edges
-print "Building Edges"
-edgelist=[]
-for edge in edges:
-    n1=graph.get_node(edge[0])[0]
-    n2=graph.get_node(edge[1])[0]
-    edgelist.append(makeedge(n1,n2,edge[2]))
-
-#Add Edges
-print "Adding Edges"
-for edge in edgelist:
-    graph.add_edge(edge)
-
-#output graph
-print "Writing Graph"
-graph.write_png(outfile)
-
-#output Stats
-print "%d Nodes" % len(nodelist)
-print "%d Dependencies" % len(edgelist)
+   #output graph
+   print "Writing Graph"
+   graph.write_png(outfile)
+   
+   #output Stats
+   print "%d Nodes" % len(nodelist)
+   print "%d Dependencies" % len(edgelist)
     
 
