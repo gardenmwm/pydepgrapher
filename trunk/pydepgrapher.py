@@ -102,6 +102,25 @@ def makenode(nodestring,nodetype):
             pn.set(k, v)
     return pn
 
+def getdepnodes(node,deps,depth=100):
+    '''This will return a list of node strings that are dependant on this node, or an upwards direction'''
+    nodelist=[node]
+    while depth > 0:
+        depth -= 1
+        for dep in deps:
+            if dep['dependency'] in nodelist and dep['resource'] not in nodelist:
+                nodelist.append(dep['resource'])
+    return nodelist
+
+def getnodedeps(node,deps,depth=100):
+    '''This will return a list of nodes that the specified node is dependent on, or a downwards direction'''
+    nodelist=[node]
+    while depth > 0:
+        depth -= 1
+        for dep in deps:
+            if dep['resource'] in nodelist and dep['dependency'] not in nodelist:
+                nodelist.append(dep['dependency'])
+    return nodelist
 
 if __name__=="__main__":
    #Parse Config
@@ -165,5 +184,5 @@ if __name__=="__main__":
    #output Stats
    print "%d Nodes" % len(nodelist)
    print "%d Dependencies" % len(edgelist)
-    
+   print "%d Cluster" % len(clusterlist)
 
