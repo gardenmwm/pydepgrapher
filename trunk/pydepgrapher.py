@@ -16,7 +16,6 @@ Graphviz		http://www.graphviz.org
 import pydot
 import csv
 import ConfigParser
-import argparse
 import sys
 
 def GetNodeOptions(parser):
@@ -67,10 +66,19 @@ def readsource(sourcefile):
 def getnodes(deps):
     nodelist={}
     for dep in deps:
-            nodelist[dep['resource']]=dep['resource_type']
-            if  dep['dependency'] not in nodelist and dep['dependency'] != '':
+        nodelist[dep['resource']]=dep['resource_type']
+        if  dep['dependency'] not in nodelist and dep['dependency'] != '':
 	       nodelist[dep['dependency']]=''
     return nodelist
+
+def getclusters(deps):
+    clusters={}
+    for dep in deps:
+        if dep['cluster'] != '' and dep['cluster'] in clusters:
+            clusters[dep['cluster']].append(dep['resource'])
+        elif dep['cluster'] != '' and dep['cluster'] not in clusters:
+            clusters[dep['cluster']]=[dep['resource']]
+    return clusters
 
 def getedges(deps):
     edgelist=[]
@@ -94,6 +102,7 @@ def makenode(nodestring,nodetype):
             pn.set(k, v)
     return pn
 
+
 if __name__=="__main__":
    #Parse Config
    print "Parsing Config"
@@ -111,26 +120,37 @@ if __name__=="__main__":
    nodestrings=getnodes(deps)
    print "Reading Edges"
    edges=getedges(deps)
+   clusterstrings=getclusters(deps)
    
    #Build Nodes
    print "Building Nodes"
-   nodelist=[]
+   nodelist={}
    for node in nodestrings:
-       nodelist.append(makenode(node,nodestrings[node]))
+       nodelist[node]=makenode(node,nodestrings[node])
    
    #create graph and add nodes
    graph=pydot.Dot(**GraphOptions)
+   clusters={}
+   #Create subgraphs
+   for cluster, nodes in clusterstrings.iteritems():
+        clusters[cluster]=pydot.Cluster(cluster,label=cluster)
+        print nodes
+        for node in nodes:
+            clusters[cluster].add_node(nodelist[node])
+            #del(nodelist[node]) #Don't want to add it twice
+        
    #graph=pydot.Dot(graph_type='digraph',ratio=1.3,layout='dot',sep='+1',overlap='scalexy')
    print "Adding Nodes"
+   for cluster in clusters:
+        graph.add_subgraph(clusters[cluster])
    for node in nodelist:
-       graph.add_node(node)
-   
+       graph.add_node(nodelist[node])
    #Create Edges
    print "Building Edges"
    edgelist=[]
    for edge in edges:
-       n1=graph.get_node(edge[0])[0]
-       n2=graph.get_node(edge[1])[0]
+       n1=nodelist[edge[0]]
+       n2=nodelist[edge[1]]
        edgelist.append(makeedge(n1,n2,edge[2]))
 
    #Add Edges
