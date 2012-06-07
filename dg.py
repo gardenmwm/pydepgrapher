@@ -5,13 +5,14 @@ class depconfig(object):
     def __init__(self,config_file='config.ini'):
         parser = ConfigParser.SafeConfigParser()
         parser.read(config_file)
-        self.NodeOptions=GetNodeOptions(parser)
-        self.EdgeOptions=GetEdgeOptions(parser)
-        self.GraphOptions=GetGraphOptions(parser)
+        self.GeneralOptions = {}
+        self.NodeOptions = self.GetNodeOptions( parser )
+        self.EdgeOptions = self.GetEdgeOptions( parser )
+        self.GraphOptions = self.GetGraphOptions( parser )
         self.GeneralOptions['sourcefile']=parser.get('general', 'sourcefile')
         self.GeneralOptions['outfile']=parser.get('general','outfile')
 
-    def GetNodeOptions(parser):
+    def GetNodeOptions( self, parser ):
         Opts={}
         NodeOpts={}
         NodeTypes=parser.get('types', 'NodeTypes').split(',')
@@ -24,7 +25,7 @@ class depconfig(object):
                 NodeOpts={}
         return Opts
 
-    def GetEdgeOptions(parser):
+    def GetEdgeOptions( self, parser ):
         Opts={}
         EdgeOpts={}
         EdgeTypes=parser.get('types', 'DepTypes').split(',')
@@ -37,22 +38,23 @@ class depconfig(object):
                 EdgeOpts={}
         return Opts
     
-    def GetGraphOptions(parser):
+    def GetGraphOptions( self, parser ):
         Opts={}
         Opts['graph_type']='digraph'
         for name,value in parser.items('graph'):
             Opts[name]=value
         return Opts
-    
-class depstrings(self):
+
+
+class depstrings(object):
     def __init__(self,GeneralOptions):
-        self.deps=readsource(self.GeneralOptions['sourcefile'])
-        self.nodes=getnodes(self.deps)
-        self.edges=getedges(self.deps)
-        self.clusterstrings=getclusters(self.deps)
+        self.deps = self.readsource( GeneralOptions['sourcefile'] )
+        self.nodes = self.getnodes( self.deps )
+        self.edges = self.getedges( self.deps )
+        self.clusters = self.getclusters( self.deps )
         return
     
-    def readsource(sourcefile):
+    def readsource( self, sourcefile ):
         deplist=[]
         f=open(sourcefile,'rt')
         reader = csv.DictReader(f)
@@ -60,7 +62,7 @@ class depstrings(self):
             deplist.append(row)
         return deplist
     
-    def getnodes(deps):
+    def getnodes( self, deps ):
         nodelist={}
         for dep in deps:
             nodelist[dep['resource']]=dep['resource_type']
@@ -68,7 +70,7 @@ class depstrings(self):
                nodelist[dep['dependency']]=''
         return nodelist
     
-    def getclusters(deps):
+    def getclusters( self, deps ):
         clusters={}
         for dep in deps:
             if dep['cluster'] != '' and dep['cluster'] in clusters:
@@ -77,7 +79,7 @@ class depstrings(self):
                 clusters[dep['cluster']]=[dep['resource']]
         return clusters
     
-    def getedges(deps):
+    def getedges( self, deps ):
         edgelist=[]
         for dep in deps:
             if dep['dependency'] != '':

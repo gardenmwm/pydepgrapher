@@ -3,8 +3,8 @@
 pyDepGrapher
 
 This program creates graphs of from a list of dependencies provided in a csv
-file. 
-It uses graphviz and pydot heavily. 
+file.
+It uses graphviz and pydot heavily.
 
 Distributed under MIT licesne
 
@@ -20,68 +20,57 @@ import sys
 
 
 
-def makeedge(node1,node2,edgetype):
-    pe=pydot.Edge(node1,node2)
-    if edgetype in EdgeOptions:
-        for k,v in EdgeOptions[edgetype].iteritems():
-            pe.set(k,v)
+def makeedge(node1, node2, edgetype, dgconf):
+    pe = pydot.Edge( node1, node2 )
+    if edgetype in dgconf.EdgeOptions:
+        for k, v in dgconf.EdgeOptions[edgetype].iteritems():
+            pe.set( k, v )
     return pe
 
-def makenode(nodestring,nodetype):
-    pn=pydot.Node(nodestring)
-    if nodetype in NodeOptions:
-        for k,v in NodeOptions[nodetype].iteritems():
-            pn.set(k, v)
+def makenode(nodestring, nodetype, dgconf):
+    pn = pydot.Node( nodestring )
+    if nodetype in dgconf.NodeOptions:
+        for k, v in dgconf.NodeOptions[nodetype].iteritems():
+            pn.set( k, v )
     return pn
 
+def makecluster( cluster, nodes, nodelist ):
+    pyc = pydot.Cluster( cluster, label = cluster )
+    for node in nodes:
+        pyc.add_node( nodelist[node] )
+    return pyc
 
+def buildgraph( dgconf, deplist ):
+    #Build Nodes
+    nodelist = {}
+    for node in deplist.nodes:
+        nodelist[node] = makenode(node, deplist.nodes[node], dgconf)
+    #create graph and add nodes
+    graph = pydot.Dot( **dgconf.GraphOptions )
+    clusters = {}
+    #Create subgraphs
+    for cluster, nodes in deplist.clusters.iteritems():
+         clusters[cluster] = makecluster ( cluster, nodes, nodelist )
+    for cluster in clusters:
+         graph.add_subgraph( clusters[cluster] )
+    for node in nodelist:
+        graph.add_node( nodelist[node] )
+    #Create Edges
+    edgelist = []
+    for edge in deplist.edges:
+        edgelist.append(makeedge(nodelist[edge[0]], nodelist[edge[1]], edge[2] , dgconf))
+    #Add Edges
+    for edge in edgelist:
+       graph.add_edge( edge )
+    #output graph
+    graph.write_png( dgconf.GeneralOptions['outfile'] )
 
-
-
-if __name__=="__main__":
-   
-   #Build Nodes
-   dg.depconfig()
-   nodelist={}
-   for node in nodestrings:
-       nodelist[node]=makenode(node,nodestrings[node])
-   
-   #create graph and add nodes
-   graph=pydot.Dot(**GraphOptions)
-   clusters={}
-   #Create subgraphs
-   for cluster, nodes in clusterstrings.iteritems():
-        clusters[cluster]=pydot.Cluster(cluster,label=cluster)
-        print nodes
-        for node in nodes:
-            clusters[cluster].add_node(nodelist[node])
-            #del(nodelist[node]) #Don't want to add it twice
-        
-   #graph=pydot.Dot(graph_type='digraph',ratio=1.3,layout='dot',sep='+1',overlap='scalexy')
-   print "Adding Nodes"
-   for cluster in clusters:
-        graph.add_subgraph(clusters[cluster])
-   for node in nodelist:
-       graph.add_node(nodelist[node])
-   #Create Edges
-   print "Building Edges"
-   edgelist=[]
-   for edge in edges:
-       n1=nodelist[edge[0]]
-       n2=nodelist[edge[1]]
-       edgelist.append(makeedge(n1,n2,edge[2]))
-
-   #Add Edges
-   print "Adding Edges"
-   for edge in edgelist:
-      graph.add_edge(edge)
-
-   #output graph
-   print "Writing Graph"
-   graph.write_png(outfile)
-   
-   #output Stats
-   print "%d Nodes" % len(nodelist)
-   print "%d Dependencies" % len(edgelist)
-   print "%d Cluster" % len(clusterlist)
+if __name__ == "__main__":
+   #Setup
+   dgconf = dg.depconfig()
+   deplist = dg.depstrings( dgconf.GeneralOptions )
+   buildgraph( dgconf, deplist )
+   print "%d Nodes" % len( deplist.nodes )
+   print "%d Dependencies" % len( deplist.edges )
+   print "%d Cluster" % len( deplist.clusters )
 
